@@ -1,29 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Todo List</title>
+    <title>Todos</title>
     <meta charset="UTF-8">
+    <link rel="icon" href="todo.png" sizes="16x16">
+    <link
+      href="https://fonts.googleapis.com/css?family=Anton%7CBaskervville%7CRaleway&display=swap"
+      rel="stylesheet"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family:"STSong" ;
             background-color: #ffffff;
             margin: 0;
             padding: 0;
         }
-        .img{
-            text-align: center;
-        }
         img{
             height:150px;
         }
-        h1{
-            text-align:center;
-            font-size:50px;
-            font-family: Georgia Serif;
-            letter-spacing: 3px;
-            margin:0;
-            padding:0;
+        blockquote{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        blockquote p{
+            font-family:"Raleway", sans-serif;
+            font-size:2rem;
+            font-weight:700;
+            color:#564b3d;
+        }
+        p::before{
+            content:'“ ';
+            font-family:Arial;
+            font-size: 65px;
+        }
+        p::after{
+            content:' ”';
+            font-family:Arial;
+            font-size: 65px;
         }
         .container{
             width:80%;
@@ -32,33 +48,60 @@
         }
         #todo-list {
             margin-top: 20px;
-            width:80%;
+            width:100%;
         }
-        .todo-item {
+        #done-list{
+            display: none;
+            margin-top: 10px;
+            width:100%;
+        }
+        .todo-item{
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
-            margin-left:10px;
+            margin-bottom: 0.2em;
+            margin-left:6px;
+            min-height: 20px;
+        }
+        @media only screen and (max-width: 400px) {
+            h1 {
+                font-size: 35px;
+            }
         }
         .todo-item input[type="checkbox"] {
+            position: relative;
             -webkit-appearance: none;
             appearance: none;
-            /* For iOS < 15 to remove gradient background */
             background-color: #fff;
-            /* Not removed via appearance */
-            margin: 0;
             font: inherit;
             color: currentColor;
-            width: 0.8em;
-            height: 0.8em;
+            width: 0.9em;
+            height: 0.9em;
+            border-radius:0;
             border: 1.2px solid currentColor;
         }
+        .todo-item input[type="checkbox"]:checked{
+            border:1.2px solid #8b8a8a;
+        }
+        .todo-item input[type="checkbox"]:checked::after{
+            content:"";
+            position: absolute;
+            top:30%;
+            left:50%;
+            width: 5px;
+            height: 10px;
+            transform: translate(-50%, -50%) rotate(45deg);
+            border:solid #8b8a8a;
+            border-width: 0 1.2px 1.2px 0;
+        }
         .todo-item span {
-            flex: 1;
+            flex:1;
+            word-break: break-all;
             font-size: 16px;
-            heigh:100%;
+            height:100%;
             color: #333;
-            margin-left:0.5em;
+            padding:0;
+            margin:0;
+            margin-left:0.2em;
             text-decoration: none;
         }
         .todo-input {
@@ -68,40 +111,112 @@
         }
         .todo-input input[type="text"] {
             flex: 1;
-            padding: 10px;
+            padding-left: 1em;
             border: none;
             font-size: 16px;
             outline: none;
-            margin-right: 10px;
+            height:40px;
             background-color: #f9f9f9;
+        }
+        button{
+            display: none;
+            background-color: transparent;
+            border:none;
+            min-height: 18px;
+            min-width:16px;
+            background-image: url("删除.png");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center left;
+        }
+        @media only screen and (min-width: 900px) {
+            .todo-item:hover button {
+                display: block;
+            }
+        }
+        #done{
+            display: none;
+            margin-left:5px;
+            margin-top:15px;
+            background-image:none;
+        }
+        #done img{
+            height:10px;
         }
     </style>
 </head>
 <body>
-<div class="img">
-    <img src="../images/people.png">
-</div>
-<h1>Focus on today</h1>
+<blockquote>
+    <p>Would you regret if today were your last day?</p>
+</blockquote>
 <div class="container">
     <div class="todo-input">
         <input type="text" id="todo-input" placeholder="添加任务">
     </div>
     <div id="todo-list"></div>
+    <button id="done" style="background-color: rgba(230,230,230,0.4); border:none; height:30px">已完成
+        <svg t="1687421114952" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1598" width="10" height="10"><path d="M797.739008 55.420928 742.31808 0 230.395904 512.03072 742.31808 1024l55.420928-55.420928-456.597504-456.58112L797.739008 55.420928zM797.739008 55.420928" fill="#272635" p-id="1599"></path></svg>
+    </button>
+    <div id="done-list"></div>
 </div>
 <script>
     const todoList = document.getElementById('todo-list');
+    const doneList = document.getElementById("done-list");
     // Get input element and add event listener to add new item
     const input = document.getElementById('todo-input');
+    let today = JSON.parse(localStorage.getItem("today"));
+    let count = JSON.parse(localStorage.getItem("count")) || 0;
+    let done = document.getElementById("done");
+    let svg = document.querySelector("#done svg");
+    const screenWidth = window.innerWidth;
+    function getDate(){
+        let date = new Date(),
+            year = date.getFullYear(), //获取完整的年份(4位)
+            month = date.getMonth() + 1, //获取当前月份(0-11,0代表1月)
+            strDate = date.getDate() // 获取当前日(1-31)
+        return year+"年"+month+"月"+strDate+"日";
+
+    }
+    function clearTodoList() {
+        let now = getDate();
+        if (today !== now) {
+            today = now;
+            localStorage.setItem("today", JSON.stringify(today));
+            localStorage.setItem('todoItems', JSON.stringify([]));
+            localStorage.setItem('doneItems', JSON.stringify([]));
+            localStorage.setItem('count', JSON.stringify(0));
+        }
+    }
+    clearTodoList();
+    function check(){
+        if (count > 0){
+            done.style.display = "block";
+        }
+        else{
+            done.style.display = "none";
+        }
+    }
+    check();
+    done.addEventListener("click",function(){
+        if (doneList.style.display === "block"){
+            doneList.style.display = "none";
+            svg.style.transform = "rotate(0deg)";
+        }
+        else{
+            doneList.style.display = "block";
+            svg.style.transform = "rotate(-90deg)";
+            displayDoneItems();
+        }
+    })
     input.addEventListener('keyup', event => {
-        if (event.keyCode === 13) {
+        if (event.key === 'Enter') {
             event.preventDefault();
             addItem();
         }
-    });
-    const addBtn = document.getElementById('add-btn');
-
+    })
     // Initialize todo list array
     let todoItems =  JSON.parse(localStorage.getItem("todoItems")) || [];
+    let doneItems = JSON.parse(localStorage.getItem("doneItems")) || [];
     // Render initial todo items
     renderItems();
     // Add new item to todo list and render items
@@ -116,45 +231,142 @@
             renderItems();
         }
     }
+    function save(){
+        localStorage.setItem("todoItems",JSON.stringify(todoItems));
+        localStorage.setItem("doneItems",JSON.stringify(doneItems));
+    }
     // Render todo items in the list
     function renderItems() {
         todoList.innerHTML = '';
         todoItems.forEach((item, index) => {
             const todoItem = document.createElement('div');
             todoItem.className = 'todo-item';
-
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = item.completed;
             checkbox.addEventListener('change', e => {
                 todoItems[index].completed = e.target.checked;
-                if (todoItems[index].completed)
-                    deleteTodo(index);
+                if (todoItems[index].completed){
+                    doneItems.push({
+                        text: todoItems[index].text,
+                        completed: true,
+                    });
+                    count++;
+                    check();
+                    localStorage.setItem("count",JSON.stringify(count));
+                    deleteTodo(index,"todo");
+                }
                 renderItems();
             });
             const span = document.createElement('span');
             span.innerText = item.text;
+            span.addEventListener("dblclick",function () {
+                edit(this,index);
+            });
+            if (screenWidth <= 400)
+                del(todoItem,index,"todo");
+            let btn = document.createElement("button");
+            btn.addEventListener("click",function (){
+                deleteTodo(index,"todo");
+                save();
+                renderItems();
+            })
             todoItem.appendChild(checkbox);
             todoItem.appendChild(span);
+            todoItem.appendChild(btn);
             todoList.appendChild(todoItem);
         });
     }
-    function save(){
-        localStorage.setItem("todoItems",JSON.stringify(todoItems));
+    function edit(element,index){
+        let text = element.innerHTML;
+        element.innerHTML = '<input style="outline: none; border:none;font-size: 16px; padding:0; width:100%; background-color:rgba(230,230,230,0.2);" type="text" value="'+text+'">';
+        // 为文本框添加事件监听器
+        let input = element.querySelector('input');
+        input.addEventListener('keyup', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                element.innerHTML = input.value;
+                todoItems[index].text = input.value;
+                save();
+            }
+        });
+        input.addEventListener("blur",function(){
+            element.innerHTML = input.value;
+            todoItems[index].text = input.value;
+            save();
+        })
+        return input.value;
     }
-    function deleteTodo(index) {
-        todoItems.splice(index, 1);
+    function displayDoneItems(){
+        doneList.innerHTML = '';
+        doneItems.forEach((item, index) => {
+            const doneItem = document.createElement('div');
+            doneItem.className = 'todo-item';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = item.completed;
+            checkbox.addEventListener('change', e => {
+                doneItems[index].completed = e.target.checked;
+                if (!doneItems[index].completed){
+                    todoItems.push({
+                        text: doneItems[index].text,
+                        completed: false
+                    });
+                    count--;
+                    check();
+                    localStorage.setItem("count",JSON.stringify(count));
+                    deleteTodo(index,"done");
+                    renderItems();
+                }
+            });
+            const span = document.createElement('span');
+            span.style.color = "#8b8a8a";
+            span.style.textDecoration = "line-through";
+            span.innerText = item.text;
+            let btn = document.createElement("button");
+            btn.addEventListener("click",function (){
+                deleteTodo(index,"done");
+                save();
+            })
+            doneItem.appendChild(checkbox);
+            doneItem.appendChild(span);
+            doneList.appendChild(doneItem);
+        });
+    }
+    function deleteTodo(index,flag) {
+        if (flag === "todo"){
+            todoItems.splice(index, 1);
+        }
+        else if (flag === "done")
+            doneItems.splice(index, 1);
         save();
         renderItems();
+        displayDoneItems();
     }
-    function clearTodoList() {
-        const now = new Date();
-        const hour = now.getHours();
-        if (hour === 0) {
-            localStorage.setItem('todoItems', JSON.stringify([]));
-        }
+    //左滑删除
+    function del(element,index,flag){
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 150; // 最小滑动距离，单位为像素
+        const deleteButtonWidth = 50; // 删除按钮的宽度，单位为像素
+
+        // 监听 touchstart 事件
+        element.addEventListener("touchstart", (event) => {
+            touchStartX = event.touches[0].clientX;
+        });
+
+        element.addEventListener("touchend", (event) => {
+            touchEndX = event.changedTouches[0].clientX;
+            const swipeDistance = touchEndX - touchStartX;
+
+            // 如果滑动距离大于设定的最小滑动距离，则触发删除操作
+            if (swipeDistance < -minSwipeDistance) {
+                deleteTodo(index,flag);
+                count--;
+                localStorage.setItem("count",JSON.stringify(count));
+            }
+        });
     }
-    setInterval(clearTodoList, 60000);
 </script>
 </body>
 </html>
