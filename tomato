@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root{
+            --work:#325540;
+            --break:#5b7837e0;
+            --proceed1:#babf7e;
+            --proceed2:#f7de8c;;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+        }
+        html {
+            background-color:var(--work) ;
+        }
+
+        .work {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .work .block {
+            position: absolute;
+            top: 0;
+            left: 48%;
+            width: 6px;
+            height: 10px;
+            border-radius: 1px;
+            transform-origin: 50% 100px;
+            background-color: rgb(255, 255, 255);
+        }
+
+        .work .time {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            color: #fff;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .work .time hr {
+            border: 1px solid #fff;
+            width: 80%;
+        }
+
+        .work .time .title {
+            font-family: Helvetica;
+            font-size: 50px;
+        }
+
+        button {
+            position: relative;
+            top: 120%;
+            width: 60px;
+            height: 40px;
+            margin: 0 10px;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 4px;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="work">
+        <div class="time">
+            <p class="title">25:00</p>
+            <hr>
+            <p id="description">work time</p>
+        </div>
+        <div class="block"></div>
+        <button onclick="startTimer()">开始</button>
+        <button onclick="resetTimer()">重置</button>
+        <audio style="display: none;" id="work" src="../images/Notification sound effects_耳聆网.mp3" >
+        </audio>
+        <audio style="display: none;" id="break" src="../images/通知的声音（应用程序开发的声音） _ 铃声_Freesound.wav" >
+        </audio>
+    </div>
+    <script>
+        const work = document.getElementsByClassName("work")[0];
+        const block = document.getElementsByClassName("block");
+        for (let i = 1; i < 36; i++) {
+            work.innerHTML += "<div class='block'></div>";
+            block[i].style.transform = "rotate(" + i * 10 + "deg)";
+        }
+        let workTime = 25 * 60; // 倒计时总时间，单位为秒
+        let remainingTime = workTime;
+
+        function startTimer() {
+            block[0].style.backgroundColor = "var(--proceed1)";
+            timer = setInterval(updateTimer, 1000);
+        }
+        function updateTimer() {
+            if (remainingTime > 0) {
+                let i = ((workTime - remainingTime) / workTime) * 36;
+                i = Math.floor(i);
+                for (let j = 1; j <= i; j++){
+                    block[j].style.backgroundColor = "var(--proceed1)";
+                }
+            }
+            let min = Math.floor(remainingTime / 60);
+            let sec = remainingTime % 60;
+            let formattedTime = padZero(min) + ":" + padZero(sec);
+            document.querySelector('.title').textContent = formattedTime;
+            if (remainingTime == 1){
+                let workSound = document.getElementById("work");
+               workSound.play();
+            }
+            if (remainingTime <= 0) {
+                for (let j = 0; j < 36; j++){
+                    block[j].style.backgroundColor = "var(--proceed1)";
+                }
+                document.body.style.backgroundColor = "var(--break)";
+                document.getElementById("description").textContent = "break time";
+                document.querySelector('.title').textContent = "05:00";
+                workTime = 5 * 60;
+                remainingTime = workTime;
+                for (let i = 0; i < 36; i++) {
+                    block[i].style.backgroundColor = "#fff";
+                }
+                block[0].style.backgroundColor = "var(--proceed2)";
+                clearInterval(timer);
+                timer = setInterval(breakTimer, 1000);
+            }
+            remainingTime--;
+            if (remainingTime == 0){
+                for (let j = 1; j <= 35; j++){
+                    block[j].style.backgroundColor = "var(--proceed1)";
+                }
+            }
+            console.log(remainingTime);
+        }
+        function breakTimer() {
+            if (remainingTime > 0) {
+                let i = ((workTime - remainingTime) / workTime) * 36;
+                i = Math.floor(i);
+                for (let j = 1; j <= i; j++){
+                    block[j].style.backgroundColor = "var(--proceed2)";
+                }
+            }
+            let min = Math.floor(remainingTime / 60);
+            let sec = remainingTime % 60;
+            let formattedTime = padZero(min) + ":" + padZero(sec);
+            document.querySelector('.title').textContent = formattedTime;
+            if (remainingTime == 1){
+                let breakSound = document.getElementById("break");
+                breakSound.play();
+            }
+            if (remainingTime <= 0) {       
+                document.body.style.backgroundColor = "var(--work)";
+                document.getElementById("description").textContent = "work time";
+                document.querySelector('.title').textContent = "25:00";
+                workTime = 25 * 60;
+                remainingTime = workTime;
+                for (let i = 0; i < 36; i++) {
+                    block[i].style.backgroundColor = "#fff";
+                }
+                block[0].style.backgroundColor = "var(--proceed1)";
+                clearInterval(timer);
+                timer = setInterval(updateTimer, 1000);
+            }
+            remainingTime--;
+            if (remainingTime == 0){
+                for (let j = 1; j <= 35; j++){
+                    block[j].style.backgroundColor = "var(--proceed2)";
+                }
+            }
+        }
+        function resetTimer() {
+            clearInterval(timer);
+            remainingTime = workTime;
+            document.querySelector('.title').textContent = '25:00';
+        }
+        function padZero(value) {
+            return value < 10 ? '0' + value : value;
+        }
+    </script>
+</body>
+
+</html>
